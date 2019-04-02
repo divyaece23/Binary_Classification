@@ -1,0 +1,438 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Importing Libraries
+
+# In[1]:
+
+
+import numpy as np
+import pandas as pd
+import matplotlib as plt
+get_ipython().run_line_magic('matplotlib', 'inline')
+import pylab as plot
+
+
+# In[2]:
+
+
+#Loading data
+data=pd.read_csv(r"E:\New folder\attributes_report.csv")
+
+
+# In[3]:
+
+
+data.head(10)
+
+
+# In[4]:
+
+
+data.describe()
+
+
+# # Finding nan and null value
+
+# In[5]:
+
+
+data.isnull().sum()
+
+
+# In[6]:
+
+
+data.shape
+
+
+# In[7]:
+
+
+data.isna().sum()
+
+
+# In[8]:
+
+
+df=data.dropna(how="any")
+
+
+# In[9]:
+
+
+df.shape
+
+
+# In[10]:
+
+
+df.dtypes
+
+
+# In[11]:
+
+
+df.info()
+
+
+# In[12]:
+
+
+#changing the data type 
+df.subscribed_after_free_trial=df["subscribed_after_free_trial"].astype("category")
+df.subscribed_after_free_trial=df["subscribed_after_free_trial"].cat.codes
+
+df.company_type=df["company_type"].astype("category")
+df.company_type=df["company_type"].cat.codes
+
+
+# In[13]:
+
+
+df.dtypes
+
+
+# In[14]:
+
+
+#Checking the range of total number of times used in a week
+fig,ax=plot.subplots(1,1)
+ax.scatter(df["Total _times_per_week"],df["subscribed_after_free_trial"])
+
+
+# In[15]:
+
+
+#If total number of times used >= 7, then they subscribed after free trial
+import seaborn as sns
+ax = sns.barplot(y="subscribed_after_free_trial", x="Total _times_per_week", data=df)
+
+
+# In[16]:
+
+
+ax = sns.barplot(x="subscribed_after_free_trial", y="Total _times_per_week", data=df)
+
+
+# In[17]:
+
+
+df.boxplot(column="Total _times_per_week")
+
+
+# In[18]:
+
+
+pd.crosstab(df.subscribed_after_free_trial,df.Day6).plot(kind="bar")
+
+
+# In[19]:
+
+
+pd.crosstab(df.subscribed_after_free_trial,df.Day4+df.Day5+df.Day6).plot(kind="bar")
+
+
+# In[20]:
+
+
+df["subscribed_after_free_trial"].value_counts()
+
+
+# In[21]:
+
+
+df["subscribed_after_free_trial"].head(10)
+
+
+# In[22]:
+
+
+#Calculating how many company subscribed after free trial
+df[df["subscribed_after_free_trial"]==1].sum()
+
+
+# In[23]:
+
+
+#Checking how many campany subscribed if the total_times_per_week is equal or greater than 5
+df[df["Total _times_per_week"]>=5 ].groupby (["subscribed_after_free_trial"]).count()
+
+
+# In[24]:
+
+
+#Checking the count of company types
+df.groupby("company_type").describe()
+
+
+# In[25]:
+
+
+#Count of Company_type after subscribtion
+subscribed=df[df["subscribed_after_free_trial"]==1].groupby (["company_type"]).count()
+subscribed
+
+
+# In[26]:
+
+
+Total_count=df.groupby("company_type").subscribed_after_free_trial.describe()
+Total_count
+
+
+# In[27]:
+
+
+Percentage_of_companytype_subscribed=(subscribed["subscribed_after_free_trial"]/Total_count["count"])*100
+Percentage_of_companytype_subscribed.plot(kind="bar",title="Company_subscribed")
+
+
+# In[28]:
+
+
+#Identifying which day,company subscribed aft free trial
+pivot=pd.pivot_table(df,index=["subscribed_after_free_trial","company_type"],values=["Day1","Day2","Day3","Day4","Day5","Day6","Day7"],aggfunc="sum")
+pivot
+
+
+# In[29]:
+
+
+pivot.plot(kind="bar")
+
+
+# In[30]:
+
+
+subscribed_true=df[df["Total _times_per_week"]>5 ]
+
+
+# In[31]:
+
+
+subscribed_true.head(10)
+
+
+# In[32]:
+
+
+X = subscribed_true.iloc [:, 10:13].values #features
+y = subscribed_true.iloc [:, 2].values #target variable
+
+
+# # Checking whether my assumption is right
+
+# In[33]:
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+X_train,X_test,y_train,y_test=train_test_split(X,y,random_state=0,test_size=.2)
+model = LogisticRegression()
+model.fit (X_train, y_train)
+
+
+# In[34]:
+
+
+model.intercept_
+
+
+# In[35]:
+
+
+model.coef_
+
+
+# In[36]:
+
+
+y_pred=model.predict(X_test)
+y_pred
+
+
+# In[37]:
+
+
+model.coef_
+
+
+# In[38]:
+
+
+Accuracy=(model.score(X_test, y_test)*100)
+Accuracy
+
+
+# In[39]:
+
+
+print("Mean squared error: %.2f" % np.mean((model.predict(X_test) - y_test) ** 2))
+
+
+# In[40]:
+
+
+pd.crosstab(y_test,y_pred)
+
+
+# In[41]:
+
+
+from sklearn.metrics import classification_report
+print(classification_report(y_test,y_pred))
+
+
+# In[63]:
+
+
+X = df.drop(["company","subscribed_after_free_trial","Max_in_login","Avg_no_of_times_login"],axis=1) #features
+
+y = df.iloc [:, 2].values #target variable
+
+
+# # Logistic Regression
+
+# In[64]:
+
+
+from sklearn.model_selection import train_test_split
+X_train,X_test,y_train,y_test=train_test_split(X,y,random_state=0,test_size=.2)
+from sklearn.linear_model import LogisticRegression
+model = LogisticRegression()
+model.fit (X_train, y_train)
+model.intercept_
+
+
+# In[65]:
+
+
+model.coef_
+
+
+# In[66]:
+
+
+y_pred=model.predict(X_test)
+
+
+# In[67]:
+
+
+Accuracy=(model.score(X_test, y_test)*100)
+Accuracy
+
+
+# In[68]:
+
+
+print("Mean squared error: %.2f" % np.mean((model.predict(X_test) - y_test) ** 2))
+
+
+# In[69]:
+
+
+print(pd.crosstab(y_test,y_pred,colnames=["predicted"],rownames=["Actual"]))
+
+
+# In[70]:
+
+
+from sklearn.metrics import classification_report
+print(classification_report(y_test,y_pred))
+
+
+# # ROC curve
+
+# In[71]:
+
+
+from sklearn import metrics
+fpr,tpr,threshold=metrics.roc_curve(y_test,y_pred)
+roc_auc=metrics.auc(fpr,tpr)
+print(roc_auc)
+plot.clf()
+plot.plot(fpr,tpr,label="roc-curve")
+plot.plot([0,1],[0,1],"k--")
+plot.ylim([0.0, 1.0])
+plot.xlim([0.0, 1.0])
+plot.xlabel("FP rate")
+plot.ylabel("TP rate")
+plot.show()
+
+
+# # SVM
+
+# In[72]:
+
+
+from sklearn import svm 
+SVM = svm.LinearSVC()  
+SVM.fit(X_train, y_train)  
+y_pred=SVM.predict(X_test)  
+print("Accuracy_SVM:",SVM.score(X_test,y_test)*100)
+
+
+# In[73]:
+
+
+print("Mean squared error: %.2f" % np.mean((SVM.predict(X_test) - y_test) ** 2))
+
+
+# # Random forest
+
+# In[74]:
+
+
+from sklearn.ensemble import RandomForestClassifier 
+RF = RandomForestClassifier(n_estimators=1000, max_depth=10, random_state=0).fit(X_train, y_train)  
+RF.predict(X_test)  
+print("Accuracy_RF:",RF.score(X_test,y_test)*100)
+
+
+# In[75]:
+
+
+print("Mean squared error: %.2f" % np.mean((RF.predict(X_test) - y_test) ** 2))
+
+
+# # Neural Networks
+
+# In[76]:
+
+
+from sklearn.neural_network import MLPClassifier
+
+NN = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(150, 10), random_state=1).fit(X_train, y_train)  
+NN.predict(X_test)  
+print("Accuracy_NN:",NN.score(X_test,y_test)*100)
+
+
+# In[77]:
+
+
+print("Mean squared error: %.2f" % np.mean((NN.predict(X_test) - y_test) ** 2))
+
+
+# # Adaboost Classifier
+
+# In[78]:
+
+
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn import metrics
+
+adaboost = AdaBoostClassifier(n_estimators=50,learning_rate=1)
+model = adaboost.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+
+# In[79]:
+
+
+print("Accuracy_Adaboost:",metrics.accuracy_score(y_test, y_pred)*100)
+
+
+
+
